@@ -1,7 +1,8 @@
 library(tidyverse)
 library(underground)
-library(changepoint)
+library(BreakoutDetection) # devtools::install_github("BreakoutDetection")
 library(animation)
+library(gridExtra)
 library(here)
 
 # Look for a metric with interesting change points on the Jubilee Line (chosen
@@ -77,47 +78,14 @@ saveGIF(movie.name = here("slides", "guess-changepoint.gif"), {
   }
 }, convert = "convert", interval = 0.1)
 
-# Animated with changepoints
-plot_changepoints <- function(x, n_obs = nrow(x), ...) {
-  plotdata <- slice(x, seq_len(n_obs))
-  changepoints <-
-    cpt.meanvar(plotdata$value, class = TRUE, ...)
-  horizontals <-
-    skms %>%
-    slice(c(1, cpts(changepoints))) %>%
-    rename(x = period) %>%
-    mutate(xend = lead(x, default = max(plotdata$period)),
-           y = param.est(changepoints)$mean)
-  ggplot(plotdata, aes(period, value)) +
-    geom_line(colour = "grey80") +
-    geom_segment(aes(x = x, xend = xend, y = y, yend = y),
-                 colour = "red",
-                 data = horizontals) +
-    xlim(range(skms$period)) +
-    ylim(range(skms$value)) +
-    theme_void()
-}
-print(plot_changepoints(skms))
-ggsave(here("slides", "changepoints-still.png"),
-       width = 4,
-       height = 4)
-print(plot_changepoints(skms, 6))
-
-saveGIF(movie.name = here("slides", "changepoints.gif"), {
-  for (i in seq_len(nrow(skms - 3)) + 3) {
-    ## draw your plots here, then pause for a while with
-    cat(i, "\n")
-    print(plot_changepoints(skms, i))
-  }
-}, convert = "convert", interval = 0.1)
 
 # Animated with changepoints
-plot_changepoints_vertical <- function(x, n_obs = nrow(x), ...) {
+plot_twitter <- function(x, n_obs = nrow(x), ...) {
   plotdata <- slice(x, seq_len(n_obs))
-  changepoints <- cpt.meanvar(plotdata$value, class = TRUE, ...)
+  changepoints <- breakout(plotdata$value, method = "multi")
   verticals <-
     skms %>%
-    slice(cpts(changepoints)) %>%
+    slice(changepoints$loc) %>%
     rename(x = period) %>%
     mutate(xend = x,
            y = -Inf, yend = Inf)
@@ -131,16 +99,76 @@ plot_changepoints_vertical <- function(x, n_obs = nrow(x), ...) {
     ylim(range(skms$value)) +
     theme_void()
 }
-print(plot_changepoints_vertical(skms))
-ggsave(here("slides", "changepoints-vertical-still.png"),
+print(plot_twitter(skms))
+ggsave(here("slides", "twitter-still.png"),
        width = 4,
        height = 4)
-print(plot_changepoints_vertical(skms, 6))
+print(plot_twitter(skms, 6))
 
-saveGIF(movie.name = here("slides", "changepoints-vertical.gif"), {
-  for (i in seq_len(nrow(skms) - 3) + 3) {
+saveGIF(movie.name = here("slides", "twitter.gif"), {
+  for (i in seq_len(nrow(skms - 3)) + 3) {
     ## draw your plots here, then pause for a while with
     cat(i, "\n")
-    print(plot_changepoints_vertical(skms, i))
+    print(plot_twitter(skms, i))
   }
 }, convert = "convert", interval = 0.1)
+
+# Compare with the 'changepoints' package
+plot_changepoint_twitter <- function(x, n_obs = nrow(x), ...) {
+  plotdata <- slice(x, seq_len(n_obs))
+  changepoint_changepoints <- cpt.meanvar(plotdata$value, class = TRUE, ...)
+  changepoint_verticals <-
+    skms %>%
+    slice(cpts(changepoint_changepoints)) %>%
+    rename(x = period) %>%
+    mutate(xend = x,
+           y = -Inf, yend = Inf)
+  twitter_changepoints <- breakout(plotdata$value, method = "multi")
+  twitter_verticals <-
+    skms %>%
+    slice(twitter_changepoints$loc) %>%
+    rename(x = period) %>%
+    mutate(xend = x,
+           y = -Inf, yend = Inf)
+  ggplot(plotdata, aes(period, value)) +
+    geom_line(colour = "grey80") +
+    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+                 colour = "red",
+                 data = changepoint_verticals,
+                 linetype = 5) +
+    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+                 colour = "blue",
+                 data = twitter_verticals,
+                 linetype = 5) +
+    geom_text(aes(max(x + 1, 0, na.rm = TRUE), 850000),
+                 colour = "red",
+                 data = changepoint_verticals,
+                 label = "changepoint") +
+    geom_text(aes(max(x + .5, 0, na.rm = TRUE), 900000),
+                 colour = "blue",
+                 data = twitter_verticals,
+                 label = "twitter") +
+    xlim(range(skms$period)) +
+    ylim(range(skms$value)) +
+    theme_void()
+}
+print(plot_changepoint_twitter(skms, 100))
+print(plot_changepoint_twitter(skms))
+print(plot_changepoint_twitter(skms, 8))
+
+saveGIF(movie.name = here("slides", "comparison-changepoint-twitter.gif"), {
+  for (i in seq_len(nrow(skms - 3)) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    print(plot_changepoint_twitter(skms, i))
+  }
+}, convert = "convert", interval = 0.1)
+
+saveVideo(video.name = here("slides", "comparison-changepoint-twitter.mp4"), {
+  for (i in seq_len(nrow(skms - 3)) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    print(plot_changepoint_twitter(skms, i))
+  }
+}, convert = "convert", interval = 0.1)
+
