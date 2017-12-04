@@ -18,6 +18,24 @@ underground %>%
   geom_line() +
   facet_wrap(~metric, scales = "free_y")
 
+# Similar but neater, for a slide
+underground %>%
+  filter(
+         # metric == "Train delays longer than 15 minutes",
+         !is.na(fourweek),
+         line == "Jubilee") %>%
+  mutate(colour = underground_colours[line],
+         period = as.numeric(str_sub(year, 1L, 4L)) + fourweek / 13) %>%
+  select(metric, period, line, colour, value) %>%
+  ggplot(aes(period, value)) +
+  geom_line() +
+  facet_wrap(~metric, scales = "free_y") +
+  theme_void() +
+  theme(strip.text = element_blank(),
+        legend.position = "none")
+ggsave(here("slides", "too-many-timeseries.png"), height = 5.319335, width = 9.898376, units = "in")
+
+
 # Interesting series:
 # * "Scheduled kilometres"
 # * "% of Timetabled Kilometres"
