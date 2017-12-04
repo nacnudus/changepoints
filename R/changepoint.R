@@ -54,8 +54,30 @@ skms <-
   select(period, value)
 
 ggplot(skms, aes(period, value)) +
-  geom_line()
+  geom_line() +
+  theme_void()
 
+# Animated version for a slide
+plot_points <- function(x, n_obs = nrow(x), ...) {
+  plotdata <- slice(x, seq_len(n_obs))
+  ggplot(plotdata, aes(period, value)) +
+    geom_line() +
+    xlim(range(skms$period)) +
+    ylim(range(skms$value)) +
+  theme_void()
+}
+plot_points(skms, 6)
+
+saveGIF(movie.name = here("slides", "guess-changepoint.gif"), {
+  for (i in seq_len(nrow(skms - 3)) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    print(plot_points(skms, i))
+    ani.pause()
+  }
+}, convert = "convert", interval = 0.1)
+
+# Animated with changepoints
 plot_changepoints <- function(x, n_obs = nrow(x), ...) {
   plotdata <- slice(x, seq_len(n_obs))
   changepoints <-
