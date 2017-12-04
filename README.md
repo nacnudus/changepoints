@@ -3,7 +3,7 @@
 Is automatic detection of changepoints in timeseries good enough to focus human
 attention when reviewing large government reports that are released frequently?
 
-![changepoints on a growing timeseries](https://github.com/nacnudus/changepoints/blob/master/animation.gif)
+![changepoints on a growing timeseries](https://github.com/nacnudus/changepoints/blob/master/slides/animation.gif)
 
 This uses London Underground [performance data
 almanac](https://tfl.gov.uk/corporate/publications-and-reports/underground-services-performance),

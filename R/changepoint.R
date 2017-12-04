@@ -2,6 +2,7 @@ library(tidyverse)
 library(underground)
 library(changepoint)
 library(animation)
+library(here)
 
 # Look for a metric with interesting change points on the Jubilee Line (chosen
 # because I know they did some major engineering a few years ago).
@@ -52,14 +53,14 @@ plot_changepoints <- function(x, n_obs = nrow(x), ...) {
     geom_segment(aes(x = x, xend = xend, y = y, yend = y),
                  colour = "red",
                  data = horizontals) +
-  xlim(range(skms$period)) +
-  ylim(range(skms$value)) +
-  theme_void()
+    xlim(range(skms$period)) +
+    ylim(range(skms$value)) +
+    theme_void()
 }
 plot_changepoints(skms)
 plot_changepoints(skms, 6)
 
-saveGIF({
+saveGIF(movie.name = here("slides", "changepoints.gif"), {
   for (i in seq_len(nrow(skms - 3)) + 3) {
     ## draw your plots here, then pause for a while with
     cat(i, "\n")
