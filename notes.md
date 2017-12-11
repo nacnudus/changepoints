@@ -24,8 +24,26 @@ The ecp package offers two methods.
 Offline, not online.  But I am using it online.  Claims that the ecp binary
 search leads to consistent changepoints, but only shows that theoretically.
 
-# Univariate vs Multivariate
+## Univariate vs Multivariate
 
 In the context of the London Underground, perhaps multivariate changepoints (all
 lines, one metric) should be considered first, by senior management, before
 univariate ones (individual lines) are considered by line management.
+
+## General change in the model
+
+The bcp package tests not only whether the mean is the same, but can instead
+check whether a fitted linear model is the same.  I hope that this can handle
+the slope in the London Underground series.
+
+This code from the bcp examples for `bcp()` demonstrations detecting two
+different linear models either side of a changepoint.
+
+```r
+# 1 true change point at location 50; the predicting variable x is equal to location
+x <- 1:100
+b <- rep(c(3,-3), each=50)
+y <- b*x + rnorm(100, sd=50)
+bcp.3b <- bcp(y, x)
+plot(bcp.3b, main="Linear Regression Change Point Example")
+```

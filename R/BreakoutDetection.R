@@ -216,3 +216,216 @@ saveGIF(movie.name = here("slides", "ecp.gif"), {
     print(plot_ecp(skms, i))
   }
 }, convert = "convert", interval = 0.1)
+
+# Compare with the 'bcp' package
+
+# bcp example to show probabilities and gradients
+x <- 1:100
+b <- rep(c(3,-3), each=50)
+y <- b*x + rnorm(100, sd=50)
+png(here("slides", "bcp-example.png"), width = 480, height = 480)
+  plot(bcp.3b, main="Linear Regression Change Point Example")
+dev.off()
+
+plot_bcp <- function(x, n_obs = nrow(x), ...) {
+  plotdata <- slice(x, seq_len(n_obs))
+  bcp_changepoints <- bcp(plotdata$value, seq_along(plotdata$value))
+  bcp_verticals <-
+    skms %>%
+    slice(which(bcp_changepoints$posterior.prob > .95)) %>%
+    rename(x = period) %>%
+    mutate(xend = x,
+           y = -Inf, yend = Inf)
+  ggplot(plotdata, aes(period, value)) +
+    geom_line(colour = "grey80") +
+    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+                 colour = "purple",
+                 data = bcp_verticals,
+                 linetype = 5) +
+    geom_text(aes(max(x - .1, 0, na.rm = TRUE), 900000),
+                 colour = "purple",
+                 data = bcp_verticals,
+                 label = "bcp",
+                 hjust = 1) +
+    xlim(range(skms$period)) +
+    ylim(range(skms$value)) +
+    theme_void()
+}
+print(plot_bcp(skms, 100))
+print(plot_bcp(skms))
+print(plot_bcp(skms, 8))
+
+# See how the probabilities of each point being a breakpoint change with new
+# information
+saveGIF(movie.name = here("slides", "bcp.gif"), {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    print(plot_bcp(skms, i))
+  }
+}, convert = "convert", interval = 0.1)
+
+plot_bcp_probs <- function(x, n_obs = nrow(x), ...) {
+  plotdata <- slice(x, seq_len(n_obs))
+  bcp_changepoints <- bcp(plotdata$value, seq_len(n_obs))
+  bcp_verticals <-
+    skms %>%
+    slice(which(bcp_changepoints$posterior.prob > .95)) %>%
+    rename(x = period) %>%
+    mutate(xend = x,
+           y = -Inf, yend = Inf)
+  bcp_probs <- data_frame(x = seq_len(n_obs),
+                          probability = bcp_changepoints$posterior.prob)
+  prob_plot <-
+    ggplot(bcp_probs, aes(x, probability)) +
+    geom_line(colour = "grey80") +
+    xlim(0, nrow(x)) +
+    scale_y_continuous(limits = c(0, 1), label = scales::percent) +
+    theme_void() +
+    theme()
+  data_plot <-
+    ggplot(plotdata, aes(period, value)) +
+    geom_line(colour = "grey80") +
+    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+                 colour = "purple",
+                 data = bcp_verticals,
+                 linetype = 5) +
+    geom_text(aes(max(x - .1, 0, na.rm = TRUE), 900000),
+                 colour = "purple",
+                 data = bcp_verticals,
+                 label = "bcp",
+                 hjust = 1) +
+    xlim(range(skms$period)) +
+    ylim(range(skms$value)) +
+    theme_void()
+  grid.arrange(data_plot, prob_plot, nrow = 2, ncol = 1)
+}
+print(plot_bcp_probs(skms, 100))
+print(plot_bcp_probs(skms))
+print(plot_bcp_probs(skms, 8))
+
+saveGIF(movie.name = here("slides", "bcp-probs.gif"), {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    print(plot_bcp_probs(skms, i))
+  }
+}, convert = "convert", interval = 0.1)
+
+plot_bcp_gradients <- function(x, n_obs = nrow(x), ...) {
+  plotdata <- slice(x, seq_len(n_obs))
+  bcp_changepoints <- bcp(plotdata$value, seq_len(n_obs))
+  bcp_verticals <-
+    skms %>%
+    slice(which(bcp_changepoints$posterior.prob > .95)) %>%
+    rename(x = period) %>%
+    mutate(xend = x,
+           y = -Inf, yend = Inf)
+  bcp_means <- data_frame(x = plotdata$period[seq_len(n_obs)],
+                          y = bcp_changepoints$posterior.mean[, 1])
+  bcp_probs <- data_frame(x = plotdata$period[seq_len(n_obs)],
+                          probability = bcp_changepoints$posterior.prob)
+  prob_plot <-
+    ggplot(bcp_probs, aes(x, probability)) +
+    geom_line(colour = "grey80") +
+    xlim(range(skms$period)) +
+    scale_y_continuous(limits = c(0, 1), label = scales::percent) +
+    theme_void() +
+    theme()
+  data_plot <-
+    ggplot(plotdata, aes(period, value)) +
+    geom_line(colour = "grey80") +
+    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+                 colour = "purple",
+                 data = bcp_verticals,
+                 linetype = 5) +
+    geom_line(aes(x, y), colour = "black", data = bcp_means) +
+    geom_text(aes(max(x - .1, 0, na.rm = TRUE), 900000),
+                 colour = "purple",
+                 data = bcp_verticals,
+                 label = "bcp",
+                 hjust = 1) +
+    xlim(range(skms$period)) +
+    ylim(range(skms$value)) +
+    theme_void()
+  grid.arrange(data_plot, prob_plot, nrow = 2, ncol = 1)
+}
+print(plot_bcp_gradients(skms, 100))
+print(plot_bcp_gradients(skms))
+print(plot_bcp_gradients(skms, 8))
+
+saveGIF(movie.name = here("slides", "bcp-gradients.gif"), {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    print(plot_bcp_gradients(skms, i))
+  }
+}, convert = "convert", interval = 0.1)
+
+saveVideo(video.name = here("slides", "bcp-gradients.mp4"), {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    print(plot_bcp_gradients(skms, i))
+  }
+}, convert = "convert", interval = 0.1)
+
+# Look at blocks in bcp
+plot_bcp_blocks <- function(x, n_obs = nrow(x), ...) {
+  plotdata <- slice(x, seq_len(n_obs))
+  bcp_changepoints <- bcp(plotdata$value, seq_len(n_obs), return.mcmc = TRUE)
+  bcp_verticals <-
+    skms %>%
+    slice(which(bcp_changepoints$mcmc.rhos[, dim(bcp_changepoints$mcmc.rhos)[2]] == 1)) %>%
+    rename(x = period) %>%
+    mutate(xend = x,
+           y = -Inf, yend = Inf)
+  bcp_means <- data_frame(x = plotdata$period[seq_len(n_obs)],
+                          y = bcp_changepoints$posterior.mean[, 1])
+  bcp_probs <- data_frame(x = plotdata$period[seq_len(n_obs)],
+                          probability = bcp_changepoints$posterior.prob)
+  prob_plot <-
+    ggplot(bcp_probs, aes(x, probability)) +
+    geom_line(colour = "grey80") +
+    xlim(range(skms$period)) +
+    scale_y_continuous(limits = c(0, 1), label = scales::percent) +
+    theme_void() +
+    theme()
+  data_plot <-
+    ggplot(plotdata, aes(period, value)) +
+    geom_line(colour = "grey80") +
+    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+                 colour = "purple",
+                 data = bcp_verticals,
+                 linetype = 5) +
+    geom_line(aes(x, y), colour = "black", data = bcp_means) +
+    geom_text(aes(max(x - .1, 0, na.rm = TRUE), 900000),
+                 colour = "purple",
+                 data = bcp_verticals,
+                 label = "bcp",
+                 hjust = 1) +
+    xlim(range(skms$period)) +
+    ylim(range(skms$value)) +
+    theme_void()
+  grid.arrange(data_plot, prob_plot, nrow = 2, ncol = 1)
+}
+print(plot_bcp_blocks(skms, 100))
+print(plot_bcp_blocks(skms))
+print(plot_bcp_blocks(skms, 8))
+
+saveGIF(movie.name = here("slides", "bcp-blocks.gif"), {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    print(plot_bcp_blocks(skms, i))
+  }
+}, convert = "convert", interval = 0.1)
+
+saveVideo(video.name = here("slides", "bcp-blocks.mp4"), {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    print(plot_bcp_blocks(skms, i))
+  }
+}, convert = "convert", interval = 0.1)
+
