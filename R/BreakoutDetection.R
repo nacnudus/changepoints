@@ -2,6 +2,7 @@ library(tidyverse)
 library(underground)
 library(changepoint)
 library(BreakoutDetection) # devtools::install_github("BreakoutDetection")
+library(ecp)
 library(animation)
 library(gridExtra)
 library(here)
@@ -175,3 +176,42 @@ saveVideo(video.name = here("slides", "comparison-changepoint-twitter.mp4"), {
   }
 }, convert = "convert", interval = 0.1)
 
+# Compare with the 'ecp' package (using the 'agglomerative' method, because it
+# is effectively non-parametric).  There are FAR TOO MANY changepoints.  Same
+# for the divisive method, unless the time between of changepoints is severely
+# restricted to be > 30 periods.
+plot_ecp <- function(x, n_obs = nrow(x), ...) {
+  plotdata <- slice(x, seq_len(n_obs))
+  ecp_changepoints <- e.agglo(matrix(plotdata$value, ncol = 1))
+  ecp_verticals <-
+    skms %>%
+    slice(ecp_changepoints$estimates) %>%
+    rename(x = period) %>%
+    mutate(xend = x,
+           y = -Inf, yend = Inf)
+  ggplot(plotdata, aes(period, value)) +
+    geom_line(colour = "grey80") +
+    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+                 colour = "forestgreen",
+                 data = ecp_verticals,
+                 linetype = 5) +
+    geom_text(aes(max(x - .1, 0, na.rm = TRUE), 800000),
+                 colour = "forestgreen",
+                 data = ecp_verticals,
+                 label = "ecp",
+                 hjust = 1) +
+    xlim(range(skms$period)) +
+    ylim(range(skms$value)) +
+    theme_void()
+}
+print(plot_ecp(skms, 100))
+print(plot_ecp(skms))
+print(plot_ecp(skms, 8))
+
+saveGIF(movie.name = here("slides", "ecp.gif"), {
+  for (i in seq_len(nrow(skms - 3)) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    print(plot_ecp(skms, i))
+  }
+}, convert = "convert", interval = 0.1)
