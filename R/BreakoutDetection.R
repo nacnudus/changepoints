@@ -4,6 +4,7 @@ library(changepoint)
 library(BreakoutDetection) # devtools::install_github("BreakoutDetection")
 library(ecp)
 library(bcp)
+library(onlineCPD)
 library(animation)
 library(gridExtra)
 library(here)
@@ -429,3 +430,53 @@ saveVideo(video.name = here("slides", "bcp-blocks.mp4"), {
   }
 }, convert = "convert", interval = 0.1)
 
+# Try onlineCPD (Bayesian again, using most-likely run-lengths)
+plot_onlineCPD <- function(oCPD, n_obs = nrow(x)) {
+  plotdata <- slice(skms, seq_len(n_obs))
+  changepoints <- oCPD$changes[-1]
+  verticals <-
+    skms %>%
+    slice(changepoints) %>%
+    rename(x = period) %>%
+    mutate(xend = x,
+           y = -Inf, yend = Inf)
+  ggplot(plotdata, aes(period, value)) +
+    geom_line(colour = "grey80") +
+    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+                 colour = "brown",
+                 data = verticals,
+                 linetype = 5) +
+    geom_text(aes(max(x - .1, 0, na.rm = TRUE), 900000),
+                 colour = "brown",
+                 data = verticals,
+                 label = "onlineCPD",
+                 hjust = 1) +
+    xlim(range(skms$period)) +
+    ylim(range(skms$value)) +
+    theme_void()
+}
+print(plot_onlineCPD(offlineCPD(skms$value[seq_len(100)]), 100))
+print(plot_onlineCPD(offlineCPD(skms$value), nrow(skms)))
+print(plot_onlineCPD(offlineCPD(skms$value[seq_len(8)]), 8))
+
+# See how the probabilities of each point being a breakpoint change with new
+# information
+saveGIF(movie.name = here("slides", "onlineCPD.gif"), {
+  x <- offlineCPD(skms$value[1:3])
+  for (i in seq_len(nrow(skms) - 3) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    x <- onlineCPD(x, skms$value[i])
+    print(plot_onlineCPD(x, i))
+  }
+}, convert = "convert", interval = 0.1)
+
+# Try an 'offline' version of the same method.  It's exactly the same, no trick.
+saveGIF(movie.name = here("slides", "offlineCPD.gif"), {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
+    ## draw your plots here, then pause for a while with
+    cat(i, "\n")
+    x <- offlineCPD(skms$value[seq_len(i)])
+    print(plot_onlineCPD(x, i))
+  }
+}, convert = "convert", interval = 0.1)

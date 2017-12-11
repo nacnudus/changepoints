@@ -47,3 +47,8 @@ y <- b*x + rnorm(100, sd=50)
 bcp.3b <- bcp(y, x)
 plot(bcp.3b, main="Linear Regression Change Point Example")
 ```
+
+## Online methods
+
+The `onlineCPD` package was archived on CRAN on 2017-03-26.  Its latest version
+was uploaded on 2016-08-23.
