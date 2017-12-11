@@ -1,5 +1,6 @@
 library(tidyverse)
 library(underground)
+library(changepoint)
 library(BreakoutDetection) # devtools::install_github("BreakoutDetection")
 library(animation)
 library(gridExtra)
