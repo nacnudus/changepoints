@@ -141,14 +141,16 @@ plot_changepoint_twitter <- function(x, n_obs = nrow(x), ...) {
                  colour = "blue",
                  data = twitter_verticals,
                  linetype = 5) +
-    geom_text(aes(max(x + 1, 0, na.rm = TRUE), 850000),
+    geom_text(aes(max(x - .1, 0, na.rm = TRUE), 850000),
                  colour = "red",
                  data = changepoint_verticals,
-                 label = "changepoint") +
-    geom_text(aes(max(x + .5, 0, na.rm = TRUE), 900000),
+                 label = "changepoint",
+                 hjust = 1) +
+    geom_text(aes(max(x - .1, 0, na.rm = TRUE), 900000),
                  colour = "blue",
                  data = twitter_verticals,
-                 label = "twitter") +
+                 label = "twitter",
+                 hjust = 1) +
     xlim(range(skms$period)) +
     ylim(range(skms$value)) +
     theme_void()
