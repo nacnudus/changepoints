@@ -3,6 +3,7 @@ library(underground)
 library(changepoint)
 library(BreakoutDetection) # devtools::install_github("BreakoutDetection")
 library(ecp)
+library(bcp)
 library(animation)
 library(gridExtra)
 library(here)
@@ -72,7 +73,7 @@ plot_points <- function(x, n_obs = nrow(x), ...) {
 plot_points(skms, 6)
 
 saveGIF(movie.name = here("slides", "guess-changepoint.gif"), {
-  for (i in seq_len(nrow(skms - 3)) + 3) {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
     ## draw your plots here, then pause for a while with
     cat(i, "\n")
     print(plot_points(skms, i))
@@ -108,7 +109,7 @@ ggsave(here("slides", "twitter-still.png"),
 print(plot_twitter(skms, 6))
 
 saveGIF(movie.name = here("slides", "twitter.gif"), {
-  for (i in seq_len(nrow(skms - 3)) + 3) {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
     ## draw your plots here, then pause for a while with
     cat(i, "\n")
     print(plot_twitter(skms, i))
@@ -161,7 +162,7 @@ print(plot_changepoint_twitter(skms))
 print(plot_changepoint_twitter(skms, 8))
 
 saveGIF(movie.name = here("slides", "comparison-changepoint-twitter.gif"), {
-  for (i in seq_len(nrow(skms - 3)) + 3) {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
     ## draw your plots here, then pause for a while with
     cat(i, "\n")
     print(plot_changepoint_twitter(skms, i))
@@ -169,7 +170,7 @@ saveGIF(movie.name = here("slides", "comparison-changepoint-twitter.gif"), {
 }, convert = "convert", interval = 0.1)
 
 saveVideo(video.name = here("slides", "comparison-changepoint-twitter.mp4"), {
-  for (i in seq_len(nrow(skms - 3)) + 3) {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
     ## draw your plots here, then pause for a while with
     cat(i, "\n")
     print(plot_changepoint_twitter(skms, i))
@@ -209,7 +210,7 @@ print(plot_ecp(skms))
 print(plot_ecp(skms, 8))
 
 saveGIF(movie.name = here("slides", "ecp.gif"), {
-  for (i in seq_len(nrow(skms - 3)) + 3) {
+  for (i in seq_len(nrow(skms) - 3) + 3) {
     ## draw your plots here, then pause for a while with
     cat(i, "\n")
     print(plot_ecp(skms, i))
