@@ -91,11 +91,10 @@ plot_twitter <- function(x, n_obs = nrow(x), ...) {
     skms %>%
     slice(changepoints$loc) %>%
     rename(x = period) %>%
-    mutate(xend = x,
-           y = -Inf, yend = Inf)
+    mutate(xend = x)
   ggplot(plotdata, aes(period, value)) +
     geom_line(colour = "grey80") +
-    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+    geom_vline(aes(xintercept = x),
                  colour = "red",
                  data = verticals,
                  linetype = 5) +
@@ -125,22 +124,20 @@ plot_changepoint_twitter <- function(x, n_obs = nrow(x), ...) {
     skms %>%
     slice(cpts(changepoint_changepoints)) %>%
     rename(x = period) %>%
-    mutate(xend = x,
-           y = -Inf, yend = Inf)
+    mutate(xend = x)
   twitter_changepoints <- breakout(plotdata$value, method = "multi")
   twitter_verticals <-
     skms %>%
     slice(twitter_changepoints$loc) %>%
     rename(x = period) %>%
-    mutate(xend = x,
-           y = -Inf, yend = Inf)
+    mutate(xend = x)
   ggplot(plotdata, aes(period, value)) +
     geom_line(colour = "grey80") +
-    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+    geom_vline(aes(xintercept = x),
                  colour = "red",
                  data = changepoint_verticals,
                  linetype = 5) +
-    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+    geom_vline(aes(xintercept = x),
                  colour = "blue",
                  data = twitter_verticals,
                  linetype = 5) +
@@ -189,11 +186,10 @@ plot_ecp <- function(x, n_obs = nrow(x), ...) {
     skms %>%
     slice(ecp_changepoints$estimates) %>%
     rename(x = period) %>%
-    mutate(xend = x,
-           y = -Inf, yend = Inf)
+    mutate(xend = x)
   ggplot(plotdata, aes(period, value)) +
     geom_line(colour = "grey80") +
-    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+    geom_vline(aes(xintercept = x),
                  colour = "forestgreen",
                  data = ecp_verticals,
                  linetype = 5) +
@@ -235,11 +231,10 @@ plot_bcp <- function(x, n_obs = nrow(x), ...) {
     skms %>%
     slice(which(bcp_changepoints$posterior.prob > .95)) %>%
     rename(x = period) %>%
-    mutate(xend = x,
-           y = -Inf, yend = Inf)
+    mutate(xend = x)
   ggplot(plotdata, aes(period, value)) +
     geom_line(colour = "grey80") +
-    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+    geom_vline(aes(xintercept = x),
                  colour = "purple",
                  data = bcp_verticals,
                  linetype = 5) +
@@ -273,8 +268,7 @@ plot_bcp_probs <- function(x, n_obs = nrow(x), ...) {
     skms %>%
     slice(which(bcp_changepoints$posterior.prob > .95)) %>%
     rename(x = period) %>%
-    mutate(xend = x,
-           y = -Inf, yend = Inf)
+    mutate(xend = x)
   bcp_probs <- data_frame(x = seq_len(n_obs),
                           probability = bcp_changepoints$posterior.prob)
   prob_plot <-
@@ -287,7 +281,7 @@ plot_bcp_probs <- function(x, n_obs = nrow(x), ...) {
   data_plot <-
     ggplot(plotdata, aes(period, value)) +
     geom_line(colour = "grey80") +
-    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+    geom_vline(aes(xintercept = x),
                  colour = "purple",
                  data = bcp_verticals,
                  linetype = 5) +
@@ -320,8 +314,7 @@ plot_bcp_gradients <- function(x, n_obs = nrow(x), ...) {
     skms %>%
     slice(which(bcp_changepoints$posterior.prob > .95)) %>%
     rename(x = period) %>%
-    mutate(xend = x,
-           y = -Inf, yend = Inf)
+    mutate(xend = x)
   bcp_means <- data_frame(x = plotdata$period[seq_len(n_obs)],
                           y = bcp_changepoints$posterior.mean[, 1])
   bcp_probs <- data_frame(x = plotdata$period[seq_len(n_obs)],
@@ -336,7 +329,7 @@ plot_bcp_gradients <- function(x, n_obs = nrow(x), ...) {
   data_plot <-
     ggplot(plotdata, aes(period, value)) +
     geom_line(colour = "grey80") +
-    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+    geom_vline(aes(xintercept = x),
                  colour = "purple",
                  data = bcp_verticals,
                  linetype = 5) +
@@ -379,8 +372,7 @@ plot_bcp_blocks <- function(x, n_obs = nrow(x), ...) {
     skms %>%
     slice(which(bcp_changepoints$mcmc.rhos[, dim(bcp_changepoints$mcmc.rhos)[2]] == 1)) %>%
     rename(x = period) %>%
-    mutate(xend = x,
-           y = -Inf, yend = Inf)
+    mutate(xend = x)
   bcp_means <- data_frame(x = plotdata$period[seq_len(n_obs)],
                           y = bcp_changepoints$posterior.mean[, 1])
   bcp_probs <- data_frame(x = plotdata$period[seq_len(n_obs)],
@@ -395,7 +387,7 @@ plot_bcp_blocks <- function(x, n_obs = nrow(x), ...) {
   data_plot <-
     ggplot(plotdata, aes(period, value)) +
     geom_line(colour = "grey80") +
-    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
+    geom_vline(aes(xintercept = x),
                  colour = "purple",
                  data = bcp_verticals,
                  linetype = 5) +
@@ -438,19 +430,18 @@ plot_onlineCPD <- function(oCPD, n_obs = nrow(x)) {
     skms %>%
     slice(changepoints) %>%
     rename(x = period) %>%
-    mutate(xend = x,
-           y = -Inf, yend = Inf)
+    mutate(xend = x)
   ggplot(plotdata, aes(period, value)) +
     geom_line(colour = "grey80") +
-    geom_segment(aes(x = x, xend = xend, y = y, yend = yend),
-                 colour = "brown",
-                 data = verticals,
-                 linetype = 5) +
+    geom_vline(aes(xintercept = x),
+               colour = "brown",
+               data = verticals,
+               linetype = 5) +
     geom_text(aes(max(x - .1, 0, na.rm = TRUE), 900000),
-                 colour = "brown",
-                 data = verticals,
-                 label = "onlineCPD",
-                 hjust = 1) +
+              colour = "brown",
+              data = verticals,
+              label = "onlineCPD",
+              hjust = 1) +
     xlim(range(skms$period)) +
     ylim(range(skms$value)) +
     theme_void()
