@@ -2,12 +2,11 @@ library(strucchange)
 library(here)
 
 # Animated with changepoints
-plot_strucchange <- function(x, n_obs = nrow(x), ...) {
+plot_strucchange <- function(x, n_obs = nrow(x), stat = "Mood",
+                             ...) {
   plotdata <- slice(x, seq_len(n_obs))
   changepoints <-
-    processStream(plotdata$value,
-                  "Kolmogorov-Smirnov",
-                  ARL0 = ARL0, startup = 20)
+    processStream(plotdata$value, cpmType = stat, ARL0 = ARL0, startup = 20)
   changepoints <-
     tibble(x =    slice(skms, changepoints$changePoints + 1)$period,
            xend = slice(skms, changepoints$detectionTimes)$period,
@@ -26,7 +25,11 @@ plot_strucchange <- function(x, n_obs = nrow(x), ...) {
     ylim(range(skms$value)) +
     theme_void()
 }
-print(plot_strucchange(skms))
+print(plot_strucchange(skms, stat = "Mann-Whitney"))
+print(plot_strucchange(skms, stat = "Mood"))
+print(plot_strucchange(skms, stat = "Lepage"))
+print(plot_strucchange(skms, stat = "Kolmogorov-Smirnov"))
+print(plot_strucchange(skms, stat = "Cramer-von-Mises"))
 ggsave(here("slides", "strucchange-still.png"),
        width = 4,
        height = 4)
