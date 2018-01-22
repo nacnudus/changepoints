@@ -11,6 +11,7 @@ library(tidyverse)
 library(glue)
 library(underground)
 library(cpm)
+library(lubridate)
 library(here)
 
 stat <- "Mood"
@@ -81,7 +82,7 @@ plots <-
   pmap(plot_series)
 for (i in seq_along(plots)) {
   cat(i, "\n")
-  ggsave(glue("{i}.png"), plots[[i]])
+  ggsave(glue("temp/{i}.png"), plots[[i]])
 }
 
 # Plot the nth-latest detections
@@ -105,5 +106,23 @@ plots <-
   pmap(plot_series)
 for (i in seq_along(plots)) {
   cat(i, "\n")
-  ggsave(glue("{i}.png"), plots[[i]])
+  ggsave(glue("temp/{i}.png"), plots[[i]])
+}
+
+# Plot n detections up to a date
+latest_date <- ymd("2017-12-09")
+n <- 10
+changes_up_to_date <-
+  changes %>%
+  filter(detectionTimes <= latest_date)
+n_series_to_view <-
+  changes_up_to_date %>%
+  arrange(desc(detectionTimes)) %>%
+  slice(seq_len(n)) %>%
+  select(metric, line) %>%
+  inner_join(series)
+plots <- pmap(n_series_to_view, plot_series)
+for (i in sprintf("%02i", seq_along(plots))) {
+  cat(glue("temp/{i}.png"), "\n")
+  ggsave(glue("temp/{i}.png"), plots[[as.integer(i)]])
 }
