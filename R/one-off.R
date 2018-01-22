@@ -47,8 +47,10 @@ changes %>%
   print(n = Inf)
 
 plot_series <- function(metric, line, changePoints, detectionTimes,
-                        changeValues, ...) {
-  changepoints <- tibble(changePoints, detectionTimes, changeValues)
+                        changeValues, max_date = Inf, ...) {
+  changepoints <-
+    tibble(changePoints, detectionTimes, changeValues) %>%
+    filter(detectionTimes <= max_date)
     # tibble(changePoints = text_to_period(changePoints),
     #        detectionTimes = text_to_period(detectionTimes),
     #        changeValues)
@@ -58,6 +60,7 @@ plot_series <- function(metric, line, changePoints, detectionTimes,
     filter(metric == .metric, line == .line) %>%
     select(metric, line, data) %>%
     unnest() %>%
+    filter(period <= max_date) %>%
     # mutate(period = text_to_period(period)) %>%
     ggplot(aes(period, value)) +
     geom_line(colour = "grey80") +
@@ -158,6 +161,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
 server <- function(input, output) {
   # Subset data
   changes_up_to_date <- reactive({
+    req(input$date)
     filter(changes, detectionTimes <= input$date)
   })
   series_to_plot <- reactive({
@@ -170,7 +174,8 @@ server <- function(input, output) {
   })
   # Create the plots
   plots <- reactive({
-    pmap(series_to_plot(), plot_series)
+    req(input$date)
+    pmap(series_to_plot(), plot_series, max_date = input$date)
   })
   # Insert the right number of plot output objects into the web page
   output$plots <- renderUI({
