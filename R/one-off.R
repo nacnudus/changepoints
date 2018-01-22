@@ -130,6 +130,8 @@ for (i in sprintf("%02i", seq_along(plots))) {
 }
 
 # Shiny app
+# With multiple plots based on https://gist.github.com/wch/5436415/
+max_plots <- 10
 ui <- fluidPage(theme = shinytheme("lumen"),
   titlePanel("London Underground: Notable Trends"),
   sidebarLayout(
@@ -140,15 +142,15 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                 value = format(Sys.time(), "%Y-%m-%d"),
                 min = format(min(changes$detectionTimes), "%Y-%m-%d"),
                 max = format(Sys.time(), "%Y-%m-%d")),
-      sliderInput("n", "Series to show:",
-                  value = 1,
+      numericInput("n", "Number of series to show:",
+                  value = 10,
                   min = 1,
-                  max = 10,
+                  max = 100,
                   step = 1)
     ),
     # Output: Description, lineplot, and reference
     mainPanel(
-      plotOutput(outputId = "plot", height = "300px")
+      uiOutput(outputId = "plots")
     )
   )
 )
@@ -159,15 +161,43 @@ server <- function(input, output) {
     filter(changes, detectionTimes <= input$date)
   })
   series_to_plot <- reactive({
+    req(input$n)
     changes_up_to_date() %>%
       arrange(desc(detectionTimes)) %>%
-      slice(input$n) %>%
-      select(metric, line) %>%
-      inner_join(series)
+      slice(seq_len(input$n)) %>%
+      distinct(metric, line) %>%
+      inner_join(series, by = c("metric", "line"))
   })
-  # Create scatterplot object the plotOutput function is expecting
-  output$plot <- renderPlot({
-    pmap(series_to_plot(), plot_series)[[1]]
+  # Create the plots
+  plots <- reactive({
+    pmap(series_to_plot(), plot_series)
+  })
+  # Insert the right number of plot output objects into the web page
+  output$plots <- renderUI({
+    req(input$n)
+    plot_output_list <-
+      seq_len(max(input$n, nrow(series_to_plot()))) %>%
+      map(~ plotOutput(paste0("plot", .x), height = 280, width = 500))
+    # Convert the list to a tagList - this is necessary for the list of items
+    # to display properly.
+    do.call(tagList, plot_output_list)
+  })
+  # Call renderPlot for each one. Plots are only actually generated when they
+  # are visible on the web page.
+  observe({
+    req(input$n)
+    for (i in seq_len(max(input$n, nrow(series_to_plot())))) {
+      # Need local so that each item gets its own number. Without it, the value
+      # of i in the renderPlot() will be the same across all instances, because
+      # of when the expression is evaluated.
+      local({
+        my_i <- i
+        plotname <- paste0("plot", my_i)
+        output[[plotname]] <- renderPlot({
+          plots()[[my_i]]
+        })
+      })
+    }
   })
 }
 # Create Shiny object
