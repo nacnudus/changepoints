@@ -15,8 +15,9 @@ library(here)
 
 series <-
   underground %>%
-  filter(!is.na(fourweek), !is.na(line)) %>%
-  mutate(period = as.numeric(str_sub(year, 1L, 4L)) + fourweek / 13) %>%
+  filter(!is.na(period), !is.na(line)) %>%
+  inner_join(rail_periods) %>%
+  mutate(period = end_date) %>%
   select(metric, line, period, value) %>%
   arrange(period) %>%
   nest(-metric, -line)
@@ -51,8 +52,7 @@ for (i in seq_len(startup - 1)) {
                                   detection_times,
                                   ~ if(.x) c(.y, observation) else .y),
            changepoints = pmap(list(detected, changepoints, cpm),
-                               ~ if(..1) c(..2, which.max(getStatistics(..3))) else ..2)) %>%
-    select(-detected)
+                               ~ if(..1) c(..2, which.max(getStatistics(..3))) else ..2))
 }
 print(observation)
 observations %>%
@@ -68,8 +68,7 @@ observations <-
                                   detection_times,
                                   ~ if(.x) c(.y, observation) else .y),
            changepoints = pmap(list(detected, changepoints, cpm),
-                               ~ if(..1) c(..2, which.max(getStatistics(..3))) else ..2)) %>%
-    select(-detected)
+                               ~ if(..1) c(..2, which.max(getStatistics(..3))) else ..2))
 print(observation)
 
 observations %>%

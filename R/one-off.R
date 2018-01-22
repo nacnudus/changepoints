@@ -5,9 +5,10 @@
 # reads all entries in one go, and prints plots of the most-recently-detected
 # changepoints
 
-# An attempt to update the model and the log is in R/one-off.R
+# An attempt to update the model and the log is in R/bulk.R
 
 library(tidyverse)
+library(glue)
 library(underground)
 library(cpm)
 library(here)
@@ -16,23 +17,12 @@ stat <- "Mood"
 ARL0 <- 100
 startup <- 20
 
-fourweek_to_period <- function(year, fourweek) {
-  as.integer(str_sub(year, 1L, 4L)) + 0.25 + as.integer(fourweek) / 13
-}
-
-fourweek_to_text <- function(year, fourweek) {
-  paste0(year, "/", sprintf("%02i", fourweek))
-}
-
-text_to_period <- function(text) {
-  as.integer(str_sub(text, 1L, 4L)) + as.integer(str_sub(text, -2L)) / 13
-}
-
 # Detect all changepoints in all series
 series <-
   underground %>%
-  filter(!is.na(fourweek), !is.na(line)) %>%
-  mutate(period = fourweek_to_period(year, fourweek)) %>%
+  filter(!is.na(period), !is.na(line)) %>%
+  inner_join(rail_periods) %>%
+  mutate(period = end_date) %>%
   select(metric, line, period, value) %>%
   arrange(period) %>%
   nest(-metric, -line) %>%
@@ -77,9 +67,11 @@ plot_series <- function(metric, line, changePoints, detectionTimes,
                      y = changeValues, yend = changeValues),
                data = changepoints,
                colour = "black") +
-    theme_void()
+    ggtitle(.metric, subtitle = .line) +
+    xlab("") +
+    ylab("") +
+    theme(panel.background = element_blank())
 }
-
 # Plot the latest detections
 latest_changes <- filter(changes, detectionTimes == max(detectionTimes))
 plots <-
@@ -94,7 +86,10 @@ for (i in seq_along(plots)) {
 
 # Plot the nth-latest detections
 # https://stackoverflow.com/a/4916318/937932
-x <- -changes$detectionTimes
+x <-
+  changes %>%
+  arrange(desc(detectionTimes)) %>%
+  pull(detectionTimes)
 x_unique <- unique(x)
 x_ranks <- rank(x_unique)
 changes$order <- as.integer(x_ranks[match(x,x_unique)])
@@ -104,7 +99,7 @@ ordered_changes <-
 ordered_changes
 plots <-
   ordered_changes %>%
-  filter(order == 9) %>%
+  filter(order == 10) %>%
   select(metric, line) %>%
   inner_join(series) %>%
   pmap(plot_series)
