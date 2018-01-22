@@ -12,6 +12,8 @@ library(glue)
 library(underground)
 library(cpm)
 library(lubridate)
+library(shiny)
+library(shinythemes)
 library(here)
 
 stat <- "Mood"
@@ -126,3 +128,47 @@ for (i in sprintf("%02i", seq_along(plots))) {
   cat(glue("temp/{i}.png"), "\n")
   ggsave(glue("temp/{i}.png"), plots[[as.integer(i)]])
 }
+
+# Shiny app
+ui <- fluidPage(theme = shinytheme("lumen"),
+  titlePanel("London Underground: Notable Trends"),
+  sidebarLayout(
+    sidebarPanel(
+      # Select date range to be plotted
+      dateInput("date",
+                "Show recent changes up to this date:",
+                value = format(Sys.time(), "%Y-%m-%d"),
+                min = format(min(changes$detectionTimes), "%Y-%m-%d"),
+                max = format(Sys.time(), "%Y-%m-%d")),
+      sliderInput("n", "Series to show:",
+                  value = 1,
+                  min = 1,
+                  max = 10,
+                  step = 1)
+    ),
+    # Output: Description, lineplot, and reference
+    mainPanel(
+      plotOutput(outputId = "plot", height = "300px")
+    )
+  )
+)
+# Define server function
+server <- function(input, output) {
+  # Subset data
+  changes_up_to_date <- reactive({
+    filter(changes, detectionTimes <= input$date)
+  })
+  series_to_plot <- reactive({
+    changes_up_to_date() %>%
+      arrange(desc(detectionTimes)) %>%
+      slice(input$n) %>%
+      select(metric, line) %>%
+      inner_join(series)
+  })
+  # Create scatterplot object the plotOutput function is expecting
+  output$plot <- renderPlot({
+    pmap(series_to_plot(), plot_series)[[1]]
+  })
+}
+# Create Shiny object
+shinyApp(ui = ui, server = server)
