@@ -7,7 +7,7 @@ fluidPage(theme = shinytheme("lumen"),
     sidebarPanel(
       # Select date range to be plotted
       dateInput("date",
-                "Show recent changes up to this date:",
+                "Show changes detected up to this date:",
                 value = format(Sys.time(), "%Y-%m-%d"),
                 max = format(Sys.time(), "%Y-%m-%d")),
       numericInput("n", "Number of series to show:",
